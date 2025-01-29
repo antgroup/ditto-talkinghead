@@ -166,6 +166,53 @@ python script/cvt_onnx_to_trt.py --onnx_dir "./checkpoints/ditto_onnx" --trt_dir
 Then run `inference.py` with `--data_root=./checkpoints/ditto_trt_custom`.
 
 
+
+
+## Docker + nvidia runtime container
+
+Build the container:
+```shell
+docker build -t ditto-talkinghead .
+```
+Run the container with GPU support:
+
+```shell
+docker run --gpus all -v $(pwd)/output:/app/output ditto-talkinghead
+```
+Or to run with custom input files:
+
+```shell
+docker run --gpus all \
+  -v $(pwd)/input:/app/input \
+  -v $(pwd)/output:/app/output \
+  ditto-talkinghead \
+  python inference.py \
+    --data_root "./checkpoints/ditto_trt_Ampere_Plus" \
+    --cfg_pkl "./checkpoints/ditto_cfg/v0.4_hubert_cfg_trt.pkl" \
+    --audio_path "/app/input/your_audio.wav" \
+    --source_path "/app/input/your_image.png" \
+    --output_path "/app/output/result.mp4"
+```
+
+To run the container you need nvidia runtime container
+
+# Setup the package repository and GPG key
+curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | sudo gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg
+
+curl -fsSL https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-container-toolkit.list | \
+  sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g' | \
+  sudo tee /etc/apt/sources.list.d/nvidia-container-toolkit.list
+
+# Update package listing and install
+sudo apt-get update
+sudo apt-get install -y nvidia-container-toolkit
+
+# Configure the Docker daemon to recognize NVIDIA runtime
+sudo nvidia-ctk runtime configure --runtime=docker
+
+# Restart Docker daemon
+sudo systemctl restart docker
+
 ## 📧 Acknowledgement
 Our implementation is based on [S2G-MDDiffusion](https://github.com/thuhcsi/S2G-MDDiffusion) and [LivePortrait](https://github.com/KwaiVGI/LivePortrait). Thanks for their remarkable contribution and released code! If we missed any open-source projects or related articles, we would like to complement the acknowledgement of this specific work immediately.
 
