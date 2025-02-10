@@ -1,5 +1,4 @@
-# Start from NVIDIA TensorRT base image
-FROM nvcr.io/nvidia/tensorrt:24.01-py3
+FROM nvcr.io/nvidia/tensorrt:24.12-py3
 
 # Set working directory
 WORKDIR /app
@@ -7,15 +6,17 @@ WORKDIR /app
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
     git \
-    git-lfs \
     ffmpeg \
     libsndfile1 \
+    build-essential \
+    python3-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Python packages
+# Install Python packages with --no-deps for torch to avoid CUDA dependencies
 RUN pip install --no-cache-dir \
-    torch \
-    tensorrt==8.6.1 \
+    torch --no-deps \
+    && pip install --no-cache-dir \
+    cuda-python \
     librosa \
     tqdm \
     filetype \
@@ -23,28 +24,23 @@ RUN pip install --no-cache-dir \
     opencv-python-headless \
     scikit-image \
     cython \
-    cuda-python \
     imageio-ffmpeg \
     colored \
-    polygraphy \
     numpy==2.0.1
 
-# Clone the repository
+# Clone the repository (without checkpoints)
 RUN git clone https://github.com/antgroup/ditto-talkinghead .
-
-# Download model checkpoints
-RUN git lfs install && \
-    git clone https://huggingface.co/digital-avatar/ditto-talkinghead checkpoints
 
 # Build Cython extensions
 RUN cd core/utils/blend && \
-    python -m cython blend.pyx && \
+    cython blend.pyx && \
     gcc -shared -pthread -fPIC -fwrapv -O2 -Wall -fno-strict-aliasing \
-        -I/usr/include/python3.10 \
-        -o blend_impl.so blend_impl.c
+        -I$(python3 -c "import sysconfig; print(sysconfig.get_paths()['include'])") \
+        -I$(python3 -c "import numpy; print(numpy.get_include())") \
+        blend.c -o blend_impl.so
 
 # Set environment variables
-ENV PYTHONPATH=/app:$PYTHONPATH
+ENV PYTHONPATH=/app
 
 # Command to run inference (can be overridden)
 CMD ["python", "inference.py", \

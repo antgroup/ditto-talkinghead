@@ -169,15 +169,23 @@ Then run `inference.py` with `--data_root=./checkpoints/ditto_trt_custom`.
 
 
 ## Docker + nvidia runtime container
+# Warning - (ubuntu docker + gpu will NOT WORK with Docker Desktop)
+https://docs.docker.com/desktop/features/gpu/
+
 
 Build the container:
 ```shell
-docker build -t ditto-talkinghead .
+./build.sh
 ```
+
+
+Clone the checkpoints as above to the host
+
+
 Run the container with GPU support:
 
 ```shell
-docker run --gpus all -v $(pwd)/output:/app/output ditto-talkinghead
+./run.sh
 ```
 Or to run with custom input files:
 
