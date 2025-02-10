@@ -1,5 +1,6 @@
-FROM nvcr.io/nvidia/tensorrt:24.12-py3
+FROM nvcr.io/nvidia/tensorrt:23.12-py3
 
+# Rest of the Dockerfile remains the same...
 # Set working directory
 WORKDIR /app
 
