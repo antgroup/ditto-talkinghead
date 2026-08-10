@@ -1,0 +1,35 @@
+[project]
+name = "ditto-talkinghead"
+version = "0.1.0"
+description = "Inference code for Ditto talking-head synthesis"
+readme = "README.md"
+requires-python = ">=3.10,<3.11"
+license = { text = "Apache-2.0" }
+dependencies = [
+    "colored",
+    "cython",
+    "filetype",
+    "imageio",
+    "imageio-ffmpeg",
+    "librosa",
+    "mediapipe",
+    "numpy==2.0.1",
+    "onnxruntime",
+    "opencv-python-headless",
+    "scikit-image",
+    "setuptools",
+    "torch",
+    "torchaudio",
+    "torchvision",
+    "tqdm",
+]
+
+[project.optional-dependencies]
+trt = [
+    "cuda-python; platform_system == 'Linux'",
+    "polygraphy",
+    "tensorrt==8.6.1; platform_system == 'Linux'",
+]
+
+[tool.uv]
+package = false

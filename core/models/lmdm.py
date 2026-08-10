@@ -21,6 +21,8 @@ class LMDM:
 
         self.model, self.model_type = load_model(model_path, device=device, **kwargs)
         self.device = device
+        if self.model_type == "pytorch":
+            self.model.device = device
 
         self.motion_feat_dim = kwargs.get("motion_feat_dim", 265)
         self.audio_feat_dim = kwargs.get("audio_feat_dim", 1024+35)
@@ -136,5 +138,4 @@ class LMDM:
         else:
             pred_kp_seq = self._call_np(kp_cond, aud_cond, sampling_timesteps)
         return pred_kp_seq
-
 

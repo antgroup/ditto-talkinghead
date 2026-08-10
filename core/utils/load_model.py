@@ -1,3 +1,17 @@
+import inspect
+
+
+def _create_module(module, device, kwargs):
+    kwargs = dict(kwargs)
+    params = inspect.signature(module).parameters
+    accepts_device = "device" in params or any(
+        p.kind == inspect.Parameter.VAR_KEYWORD for p in params.values()
+    )
+    if accepts_device:
+        kwargs["device"] = device
+    return module(**kwargs)
+
+
 def load_model(model_path: str, device: str = "cuda", **kwargs):
     if kwargs.get("force_ori_type", False):
         # for hubert, landmark, retinaface, mediapipe
@@ -44,7 +58,7 @@ def create_model(
     module = getattr(importlib.import_module(package_name, __package__), module_name)
     # from <package_name> import <module_name>
 
-    model = module(**kwargs)
+    model = _create_module(module, device, kwargs)
     model.load_model(model_path).to(device)
     return model
 
@@ -60,5 +74,5 @@ def load_force_ori_type(
     import importlib
 
     module = getattr(importlib.import_module(package_name, __package__), module_name)
-    model = module(**kwargs)
+    model = _create_module(module, device, kwargs)
     return model

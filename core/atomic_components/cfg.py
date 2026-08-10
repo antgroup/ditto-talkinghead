@@ -6,6 +6,18 @@ import numpy as np
 def load_pkl(pkl):
     with open(pkl, "rb") as f:
         return pickle.load(f)
+
+
+def _replace_device(cfg, device):
+    if isinstance(cfg, dict):
+        for k, v in cfg.items():
+            if k == "device":
+                cfg[k] = device
+            else:
+                _replace_device(v, device)
+    elif isinstance(cfg, list):
+        for item in cfg:
+            _replace_device(item, device)
     
 
 def parse_cfg(cfg_pkl, data_root, replace_cfg=None):
@@ -21,6 +33,8 @@ def parse_cfg(cfg_pkl, data_root, replace_cfg=None):
     # ---
     # replace cfg for debug
     if isinstance(replace_cfg, dict):
+        if replace_cfg.get("device"):
+            _replace_device(cfg, replace_cfg["device"])
         for k, v in replace_cfg.items():
             if not isinstance(v, dict):
                 continue

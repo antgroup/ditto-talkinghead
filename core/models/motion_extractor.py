@@ -1,6 +1,7 @@
 import numpy as np
 import torch
 from ..utils.load_model import load_model
+from ..utils.torch_utils import cuda_autocast
 
 
 class MotionExtractor:
@@ -36,7 +37,7 @@ class MotionExtractor:
             for name in self.output_names:
                 outputs[name] = self.model.buffer[name][0].copy()
         elif self.model_type == "pytorch":
-            with torch.no_grad(), torch.autocast(device_type=self.device[:4], dtype=torch.float16, enabled=True):
+            with torch.no_grad(), cuda_autocast(self.device):
                 pred = self.model(torch.from_numpy(image).to(self.device))
                 for i, name in enumerate(self.output_names):
                     outputs[name] = pred[i].float().cpu().numpy()
@@ -45,5 +46,4 @@ class MotionExtractor:
         outputs["exp"] = outputs["exp"].reshape(1, -1)
         outputs["kp"] = outputs["kp"].reshape(1, -1)
         return outputs
-
 
