@@ -6,7 +6,21 @@ import random
 import torch
 import pickle
 
-from stream_pipeline_offline import StreamSDK
+def load_sdk_class(cfg_pkl: str):
+    """Select the pipeline class by the online_mode flag stored in the cfg pkl.
+
+    inference.py used to hard-import the offline pipeline, which silently
+    produces only ~5 frames when used with an online cfg
+    (e.g. v0.4_hubert_cfg_trt_online.pkl): the offline workers swallow the
+    mismatch into worker_exception without printing any traceback.
+    """
+    with open(cfg_pkl, "rb") as f:
+        cfg = pickle.load(f)
+    if cfg.get("default_kwargs", {}).get("online_mode", False):
+        from stream_pipeline_online import StreamSDK
+    else:
+        from stream_pipeline_offline import StreamSDK
+    return StreamSDK
 
 
 def seed_everything(seed):
@@ -24,7 +38,7 @@ def load_pkl(pkl):
         return pickle.load(f)
 
 
-def run(SDK: StreamSDK, audio_path: str, source_path: str, output_path: str, more_kwargs: str | dict = {}):
+def run(SDK: "StreamSDK", audio_path: str, source_path: str, output_path: str, more_kwargs: str | dict = {}):
 
     if isinstance(more_kwargs, str):
         more_kwargs = load_pkl(more_kwargs)
@@ -77,6 +91,7 @@ if __name__ == "__main__":
     # init sdk
     data_root = args.data_root   # model dir
     cfg_pkl = args.cfg_pkl     # cfg pkl
+    StreamSDK = load_sdk_class(cfg_pkl)
     SDK = StreamSDK(cfg_pkl, data_root)
 
     # input args
