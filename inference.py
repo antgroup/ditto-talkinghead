@@ -3,6 +3,8 @@ import math
 import os
 import numpy as np
 import random
+import shutil
+import subprocess
 import torch
 import pickle
 
@@ -22,6 +24,24 @@ def seed_everything(seed):
 def load_pkl(pkl):
     with open(pkl, "rb") as f:
         return pickle.load(f)
+
+
+def resolve_ffmpeg():
+    """Return the ffmpeg executable to use for muxing.
+
+    Prefer ffmpeg on PATH. If it is not there, fall back to the binary that
+    ships with imageio-ffmpeg, which is already a dependency. If that package
+    cannot be imported either, return the bare name so the call fails the same
+    way it did before.
+    """
+    exe = shutil.which("ffmpeg")
+    if exe is not None:
+        return exe
+    try:
+        import imageio_ffmpeg
+    except ImportError:
+        return "ffmpeg"
+    return imageio_ffmpeg.get_ffmpeg_exe()
 
 
 def run(SDK: StreamSDK, audio_path: str, source_path: str, output_path: str, more_kwargs: str | dict = {}):
@@ -56,9 +76,16 @@ def run(SDK: StreamSDK, audio_path: str, source_path: str, output_path: str, mor
         SDK.audio2motion_queue.put(aud_feat)
     SDK.close()
 
-    cmd = f'ffmpeg -loglevel error -y -i "{SDK.tmp_output_path}" -i "{audio_path}" -map 0:v -map 1:a -c:v copy -c:a aac "{output_path}"'
+    cmd = [
+        resolve_ffmpeg(), "-loglevel", "error", "-y",
+        "-i", SDK.tmp_output_path,
+        "-i", audio_path,
+        "-map", "0:v", "-map", "1:a",
+        "-c:v", "copy", "-c:a", "aac",
+        output_path,
+    ]
     print(cmd)
-    os.system(cmd)
+    subprocess.run(cmd)
 
     print(output_path)
 
