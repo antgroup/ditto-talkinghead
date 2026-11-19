@@ -11,7 +11,7 @@ class VideoWriterByImageIO:
         macro_block_size = kwargs.get("macro_block_size", 2)
         ffmpeg_params = ["-crf", str(kwargs.get("crf", 18))]
 
-        os.makedirs(os.path.dirname(video_path), exist_ok=True)
+        os.makedirs(os.path.dirname(video_path) or ".", exist_ok=True)
         
         writer = imageio.get_writer(
             video_path,
